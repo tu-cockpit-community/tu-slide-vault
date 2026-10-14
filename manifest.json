@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tu-cockpit-community/TU-Cockpit/main/schemas/plugin-manifest.v1.json",
+  "id": "tuwien.community.slide-vault",
+  "name": "TU Slide Vault",
+  "version": "1.0.0",
+  "description": "Offline lecture slide cache, instant full-text search across course PDF materials, and dark-mode slide viewer.",
+  "author": {
+    "name": "TU Cockpit Community Contributors",
+    "github": "tu-cockpit-community",
+    "url": "https://github.com/tu-cockpit-community"
+  },
+  "entrypoint": "index.html",
+  "category": "Academic",
+  "homepage": "https://github.com/tu-cockpit-community/tu-slide-vault",
+  "capabilities": {
+    "network": [
+      "https://tuwel.tuwien.ac.at/*",
+      "https://vowi.fsinf.at/*"
+    ],
+    "storage": {
+      "quotaBytes": 104857600
+    },
+    "notifications": true,
+    "systemClipboard": true
+  },
+  "permissions": [
+    "storage.localstorage",
+    "storage.indexeddb",
+    "network.fetch"
+  ]
+}
