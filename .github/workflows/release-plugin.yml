@@ -15,17 +15,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-        - run: npm ci
-        - run: npm run build
-        - name: Package Plugin Archive
-          run: |
-            mkdir -p bundle
-            cp dist/index.html bundle/index.html
-            cp manifest.json bundle/manifest.json
-            cd bundle && zip -r ../plugin.zip *
-        - name: Create Release
-          uses: softprops/action-gh-release@v2
-          with:
-            files: plugin.zip
-            draft: false
-            prerelease: false
+      - run: npm ci
+      - run: npm run build
+      - name: Package Plugin Archive
+        run: |
+          mkdir -p bundle
+          cp dist/index.html bundle/index.html
+          cp manifest.json bundle/manifest.json
+          cd bundle && zip -r ../plugin.zip *
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: plugin.zip
+          draft: false
+          prerelease: false
