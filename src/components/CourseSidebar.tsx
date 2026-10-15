@@ -130,54 +130,79 @@ export const CourseSidebar: React.FC<CourseSidebarProps> = ({
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          {courses.map((course) => {
-            const isSelected = selectedCourseId === course.id;
-            return (
-              <button
-                key={course.id}
-                onClick={() => onSelectCourse(course.id)}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  padding: "10px 12px",
-                  borderRadius: "8px",
-                  border: isSelected ? "1px solid var(--tu-border-focus)" : "1px solid transparent",
-                  backgroundColor: isSelected ? "var(--tu-accent-subtle)" : "transparent",
-                  color: "var(--tu-text-primary)",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  transition: "background-color 0.15s ease",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginBottom: "4px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span
-                      style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        backgroundColor: course.color,
-                        display: "inline-block",
-                      }}
-                    />
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: course.color }}>
-                      {course.code}
+          {courses.length === 0 ? (
+            <div
+              style={{
+                padding: "20px 12px",
+                textAlign: "center",
+                color: "var(--tu-text-muted)",
+                fontSize: "12px",
+                lineHeight: "1.5",
+                backgroundColor: "var(--tu-bg-canvas)",
+                borderRadius: "8px",
+                border: "1px dashed var(--tu-border)",
+                marginTop: "4px",
+              }}
+            >
+              <div style={{ fontWeight: 600, color: "var(--tu-text-secondary)", marginBottom: "4px" }}>
+                No courses yet
+              </div>
+              <div style={{ fontSize: "11px" }}>
+                Slides saved from TUWEL or uploaded will appear here grouped by course.
+              </div>
+            </div>
+          ) : (
+            courses.map((course) => {
+              const isSelected = selectedCourseId === course.id;
+              return (
+                <button
+                  key={course.id}
+                  onClick={() => onSelectCourse(course.id)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: isSelected ? "1px solid var(--tu-border-focus)" : "1px solid transparent",
+                    backgroundColor: isSelected ? "var(--tu-accent-subtle)" : "transparent",
+                    color: "var(--tu-text-primary)",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    transition: "background-color 0.15s ease",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginBottom: "4px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          backgroundColor: course.color,
+                          display: "inline-block",
+                        }}
+                      />
+                      <span style={{ fontSize: "11px", fontWeight: 700, color: course.color }}>
+                        {course.code}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "var(--tu-text-muted)" }}>
+                      {course.slideCount} decks
                     </span>
                   </div>
-                  <span style={{ fontSize: "11px", color: "var(--tu-text-muted)" }}>
-                    {course.slideCount} decks
-                  </span>
-                </div>
-                <div style={{ fontSize: "13px", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {course.name}
-                </div>
-                <div style={{ fontSize: "11px", color: "var(--tu-text-secondary)", marginTop: "2px" }}>
-                  {course.lecturer}
-                </div>
-              </button>
-            );
-          })}
+                  <div style={{ fontSize: "13px", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {course.name}
+                  </div>
+                  {course.lecturer && (
+                    <div style={{ fontSize: "11px", color: "var(--tu-text-secondary)", marginTop: "2px" }}>
+                      {course.lecturer}
+                    </div>
+                  )}
+                </button>
+              );
+            })
+          )}
         </div>
       </div>
 

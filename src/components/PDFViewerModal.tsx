@@ -25,20 +25,50 @@ export const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
   courses,
   onClose,
 }) => {
+  const resolveUrl = (rawUrl?: string): string | undefined => {
+    if (!rawUrl) return undefined;
+    if (
+      rawUrl.startsWith("data:") ||
+      rawUrl.startsWith("blob:") ||
+      rawUrl.startsWith("http:") ||
+      rawUrl.startsWith("https:") ||
+      rawUrl.startsWith("asset:")
+    ) {
+      return rawUrl;
+    }
+    const tauri =
+      typeof window !== "undefined"
+        ? (window as any).__TAURI__ || (window as any).parent?.__TAURI__
+        : null;
+    if (tauri?.core?.convertFileSrc) {
+      try {
+        return tauri.core.convertFileSrc(rawUrl);
+      } catch (e) {
+        console.warn("Failed to convert file src:", e);
+      }
+    }
+    return rawUrl;
+  };
+
   const [currentPage, setCurrentPage] = useState<number>(initialPageNumber);
   const [invertDark, setInvertDark] = useState<boolean>(true);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
-  const [resolvedPdfUrl, setResolvedPdfUrl] = useState<string | undefined>(deck.pdfUrl);
+  const [resolvedPdfUrl, setResolvedPdfUrl] = useState<string | undefined>(() =>
+    resolveUrl(deck.pdfUrl)
+  );
 
   useEffect(() => {
-    if (!resolvedPdfUrl && deck.id.startsWith("vault-")) {
+    if (deck.pdfUrl) {
+      const converted = resolveUrl(deck.pdfUrl);
+      setResolvedPdfUrl(converted);
+    } else if (!resolvedPdfUrl && deck.id.startsWith("vault-")) {
       getPDFFromVault(deck.id).then((entry) => {
         if (entry?.dataUrl) {
           setResolvedPdfUrl(entry.dataUrl);
         }
       });
     }
-  }, [deck.id, resolvedPdfUrl]);
+  }, [deck.id, deck.pdfUrl]);
 
   const course = courses.find((c) => c.id === deck.courseId);
   const page = deck.pages.find((p) => p.pageNumber === currentPage) || deck.pages[0];

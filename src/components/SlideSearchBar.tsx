@@ -8,20 +8,8 @@ interface SlideSearchBarProps {
   totalCount: number;
   onSelectTopic: (topic: string) => void;
   activeTopic: string | null;
+  availableTopics: string[];
 }
-
-const POPULAR_TOPICS = [
-  "Komplexität",
-  "Landau-Symbole",
-  "MergeSort",
-  "Master-Theorem",
-  "AVL-Bäume",
-  "Konvergenz",
-  "OOP",
-  "Vektorräume",
-  "Relationales Modell",
-  "SQL",
-];
 
 export const SlideSearchBar: React.FC<SlideSearchBarProps> = ({
   query,
@@ -30,6 +18,7 @@ export const SlideSearchBar: React.FC<SlideSearchBarProps> = ({
   totalCount,
   onSelectTopic,
   activeTopic,
+  availableTopics,
 }) => {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
@@ -93,45 +82,47 @@ export const SlideSearchBar: React.FC<SlideSearchBarProps> = ({
         </div>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          overflowX: "auto",
-          paddingBottom: "2px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "var(--tu-text-muted)", marginRight: "4px" }}>
-          <Tag size={12} />
-          <span>Topics:</span>
-        </div>
+      {availableTopics.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            overflowX: "auto",
+            paddingBottom: "2px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "var(--tu-text-muted)", marginRight: "4px" }}>
+            <Tag size={12} />
+            <span>Topics:</span>
+          </div>
 
-        {POPULAR_TOPICS.map((topic) => {
-          const isActive = activeTopic === topic || query.toLowerCase() === topic.toLowerCase();
-          return (
-            <button
-              key={topic}
-              onClick={() => onSelectTopic(topic)}
-              style={{
-                backgroundColor: isActive ? "var(--tu-accent)" : "var(--tu-bg-elevated)",
-                color: isActive ? "#ffffff" : "var(--tu-text-secondary)",
-                border: "1px solid",
-                borderColor: isActive ? "var(--tu-accent)" : "var(--tu-border)",
-                borderRadius: "14px",
-                padding: "3px 10px",
-                fontSize: "11px",
-                fontWeight: 500,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                transition: "all 0.15s ease",
-              }}
-            >
-              {topic}
-            </button>
-          );
-        })}
-      </div>
+          {availableTopics.map((topic) => {
+            const isActive = activeTopic === topic || query.toLowerCase() === topic.toLowerCase();
+            return (
+              <button
+                key={topic}
+                onClick={() => onSelectTopic(topic)}
+                style={{
+                  backgroundColor: isActive ? "var(--tu-accent)" : "var(--tu-bg-elevated)",
+                  color: isActive ? "#ffffff" : "var(--tu-text-secondary)",
+                  border: "1px solid",
+                  borderColor: isActive ? "var(--tu-accent)" : "var(--tu-border)",
+                  borderRadius: "14px",
+                  padding: "3px 10px",
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                {topic}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

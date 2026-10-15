@@ -1,67 +1,33 @@
 import { Course, SlideDeck } from "../types/slide";
 
-export const INITIAL_COURSES: Course[] = [
-  {
-    id: "algodat",
-    code: "185.A48",
-    name: "Algorithmen und Datenstrukturen",
-    semester: "WS 2026/27",
-    lecturer: "Univ.Prof. Dr. Günther Raidl",
-    color: "#0284c7",
-    icon: "Binary",
-    slideCount: 0,
-  },
-  {
-    id: "analysis1",
-    code: "101.A01",
-    name: "Analysis 1 für Informatik",
-    semester: "WS 2026/27",
-    lecturer: "Ao.Univ.Prof. Dr. Michael Kaltenbäck",
-    color: "#8b5cf6",
-    icon: "FunctionSquare",
-    slideCount: 0,
-  },
-  {
-    id: "eprog",
-    code: "185.A91",
-    name: "Einführung in das Programmieren 1",
-    semester: "WS 2026/27",
-    lecturer: "Univ.Prof. Dr. Jens Knoop",
-    color: "#10b981",
-    icon: "Code2",
-    slideCount: 0,
-  },
-  {
-    id: "linalg",
-    code: "101.A02",
-    name: "Lineare Algebra für Informatik",
-    semester: "WS 2026/27",
-    lecturer: "Univ.Prof. Dr. Martin Goldstern",
-    color: "#f59e0b",
-    icon: "Boxes",
-    slideCount: 0,
-  },
-  {
-    id: "dbs",
-    code: "184.708",
-    name: "Datenbanksysteme",
-    semester: "WS 2026/27",
-    lecturer: "Univ.Prof. Dr. Reinhard Pichler",
-    color: "#ec4899",
-    icon: "Database",
-    slideCount: 0,
-  },
-];
+export const INITIAL_COURSES: Course[] = [];
 
 export const INITIAL_DECKS: SlideDeck[] = [];
 
-const STORAGE_KEY_DECKS = "tu_slide_vault_decks";
+const STORAGE_KEY_DECKS = "tu_slide_vault_decks_v2";
 
 export function loadSlideDecks(): SlideDeck[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_DECKS);
     if (raw) {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((d) => d && !d.id?.startsWith("deck-"));
+      }
+    }
+    // Check legacy key and migrate only genuine user uploads or synced filesystem decks
+    const legacyRaw = localStorage.getItem("tu_slide_vault_decks");
+    if (legacyRaw) {
+      const parsed = JSON.parse(legacyRaw);
+      if (Array.isArray(parsed)) {
+        const genuine = parsed.filter(
+          (d) => d && (d.id?.startsWith("vault-") || d.id?.startsWith("fs-"))
+        );
+        if (genuine.length > 0) {
+          saveSlideDecks(genuine);
+          return genuine;
+        }
+      }
     }
   } catch (e) {
     console.error("Failed to load slide decks from localStorage", e);
@@ -71,7 +37,12 @@ export function loadSlideDecks(): SlideDeck[] {
 
 export function saveSlideDecks(decks: SlideDeck[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY_DECKS, JSON.stringify(decks));
+    // Strip giant base64 data URLs to prevent QuotaExceededError in localStorage
+    // (Full PDF binary data URLs are stored reliably in IndexedDB)
+    const sanitized = decks.map((d) =>
+      d.pdfUrl && d.pdfUrl.startsWith("data:") ? { ...d, pdfUrl: undefined } : d
+    );
+    localStorage.setItem(STORAGE_KEY_DECKS, JSON.stringify(sanitized));
   } catch (e) {
     console.error("Failed to save slide decks to localStorage", e);
   }
