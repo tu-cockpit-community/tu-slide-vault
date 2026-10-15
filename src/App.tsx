@@ -1,12 +1,14 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { Course, SlideDeck } from "./types/slide";
 import {
   INITIAL_COURSES,
   loadSlideDecks,
+  saveSlideDecks,
   toggleCachedState,
   toggleBookmarkState,
   calculateStorageQuota,
 } from "./services/slideStorage";
+import { storePDFInVault } from "./services/vaultIndexedDB";
 import { searchSlides } from "./services/pdfIndexer";
 import { CourseSidebar } from "./components/CourseSidebar";
 import { SlideSearchBar } from "./components/SlideSearchBar";
@@ -15,6 +17,7 @@ import { PDFViewerModal } from "./components/PDFViewerModal";
 import {
   BookOpen,
   HardDrive,
+  Upload,
 } from "lucide-react";
 
 export const App: React.FC = () => {
@@ -28,8 +31,67 @@ export const App: React.FC = () => {
 
   const [activeReadingDeck, setActiveReadingDeck] = useState<SlideDeck | null>(null);
   const [activeReadingPage, setActiveReadingPage] = useState<number>(1);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const storageStats = useMemo(() => calculateStorageQuota(decks), [decks]);
+
+  const handleUploadPDF = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const dataUrl = event.target?.result as string;
+      if (!dataUrl) return;
+
+      const deckId = `vault-${Date.now()}`;
+      const title = file.name.replace(/\.pdf$/i, "");
+      const courseId = selectedCourseId || (courses[0]?.id || "algodat");
+      const course = courses.find((c) => c.id === courseId);
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1) + " MB";
+      const uploadDate = new Date().toISOString().slice(0, 10);
+
+      await storePDFInVault({
+        id: deckId,
+        name: file.name,
+        dataUrl,
+        sizeBytes: file.size,
+        uploadDate,
+      });
+
+      const newDeck: SlideDeck = {
+        id: deckId,
+        courseId,
+        lectureNumber: Math.floor(Math.random() * 8) + 1,
+        title,
+        description: `Uploaded PDF slide notes (${file.name}) stored in offline vault.`,
+        topics: [course?.name || "Materials", "Uploaded Slides", "Student Notes"],
+        pageCount: 1,
+        fileSize: sizeMb,
+        uploadDate,
+        cached: true,
+        bookmarked: false,
+        pdfUrl: dataUrl,
+        pages: [
+          {
+            pageNumber: 1,
+            title: title,
+            content: [
+              `Document: ${file.name}`,
+              `File Size: ${sizeMb} • Stored in IndexedDB`,
+              `Uploaded on ${uploadDate} for ${course?.name || "Course"}`,
+            ],
+            notes: "Direct PDF viewing available in dark-mode viewer.",
+          },
+        ],
+      };
+
+      const updated = [newDeck, ...decks];
+      setDecks(updated);
+      saveSlideDecks(updated);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleToggleCache = (id: string) => {
     const updated = toggleCachedState(id);
@@ -128,6 +190,36 @@ export const App: React.FC = () => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".pdf,application/pdf"
+            onChange={handleUploadPDF}
+            style={{ display: "none" }}
+          />
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "5px 12px",
+              backgroundColor: "var(--tu-accent)",
+              color: "#ffffff",
+              borderRadius: "6px",
+              border: "none",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "opacity 0.15s ease",
+            }}
+            title="Upload PDF Slides / Notes from device to offline vault"
+          >
+            <Upload size={14} />
+            <span>Upload Slides</span>
+          </button>
+
           <div
             style={{
               display: "flex",

@@ -10,6 +10,8 @@ import {
   ZoomOut,
 } from "lucide-react";
 
+import { getPDFFromVault } from "../services/vaultIndexedDB";
+
 interface PDFViewerModalProps {
   deck: SlideDeck;
   initialPageNumber?: number;
@@ -26,6 +28,17 @@ export const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(initialPageNumber);
   const [invertDark, setInvertDark] = useState<boolean>(true);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [resolvedPdfUrl, setResolvedPdfUrl] = useState<string | undefined>(deck.pdfUrl);
+
+  useEffect(() => {
+    if (!resolvedPdfUrl && deck.id.startsWith("vault-")) {
+      getPDFFromVault(deck.id).then((entry) => {
+        if (entry?.dataUrl) {
+          setResolvedPdfUrl(entry.dataUrl);
+        }
+      });
+    }
+  }, [deck.id, resolvedPdfUrl]);
 
   const course = courses.find((c) => c.id === deck.courseId);
   const page = deck.pages.find((p) => p.pageNumber === currentPage) || deck.pages[0];
@@ -266,39 +279,56 @@ export const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
             </div>
           </div>
 
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
-            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#0f172a", lineHeight: 1.25 }}>
-              {page ? page.title : deck.title}
-            </h1>
-
-            {page && page.content && (
-              <ul style={{ display: "flex", flexDirection: "column", gap: "10px", paddingLeft: "24px" }}>
-                {page.content.map((bullet, idx) => (
-                  <li key={idx} style={{ fontSize: "16px", color: "#334155", lineHeight: 1.5 }}>
-                    {bullet}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {page && page.codeSnippet && (
-              <pre
+          {resolvedPdfUrl ? (
+            <div style={{ flex: 1, width: "100%", height: "100%", minHeight: "440px", display: "flex", flexDirection: "column" }}>
+              <iframe
+                src={`${resolvedPdfUrl}#page=${currentPage}`}
+                title={deck.title}
                 style={{
-                  backgroundColor: "#0f172a",
-                  color: "#38bdf8",
-                  padding: "14px 18px",
-                  borderRadius: "8px",
-                  fontFamily: "var(--tu-font-mono)",
-                  fontSize: "13px",
-                  lineHeight: 1.5,
-                  overflowX: "auto",
-                  marginTop: "8px",
+                  width: "100%",
+                  height: "100%",
+                  minHeight: "440px",
+                  border: "none",
+                  borderRadius: "6px",
+                  backgroundColor: "#ffffff",
                 }}
-              >
-                <code>{page.codeSnippet}</code>
-              </pre>
-            )}
-          </div>
+              />
+            </div>
+          ) : (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
+              <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#0f172a", lineHeight: 1.25 }}>
+                {page ? page.title : deck.title}
+              </h1>
+
+              {page && page.content && (
+                <ul style={{ display: "flex", flexDirection: "column", gap: "10px", paddingLeft: "24px" }}>
+                  {page.content.map((bullet, idx) => (
+                    <li key={idx} style={{ fontSize: "16px", color: "#334155", lineHeight: 1.5 }}>
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {page && page.codeSnippet && (
+                <pre
+                  style={{
+                    backgroundColor: "#0f172a",
+                    color: "#38bdf8",
+                    padding: "14px 18px",
+                    borderRadius: "8px",
+                    fontFamily: "var(--tu-font-mono)",
+                    fontSize: "13px",
+                    lineHeight: 1.5,
+                    overflowX: "auto",
+                    marginTop: "8px",
+                  }}
+                >
+                  <code>{page.codeSnippet}</code>
+                </pre>
+              )}
+            </div>
+          )}
 
           <div
             style={{
