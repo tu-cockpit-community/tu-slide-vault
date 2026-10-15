@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Course, SlideDeck } from "./types/slide";
 import {
   INITIAL_COURSES,
@@ -32,6 +32,71 @@ export const App: React.FC = () => {
   const [activeReadingDeck, setActiveReadingDeck] = useState<SlideDeck | null>(null);
   const [activeReadingPage, setActiveReadingPage] = useState<number>(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadPhysicalSlides = useCallback(async () => {
+    if (typeof window !== "undefined" && (window as any).__TAURI__?.core?.invoke) {
+      try {
+        const physicalFiles = await (window as any).__TAURI__.core.invoke("list_slide_vault_files");
+        if (Array.isArray(physicalFiles) && physicalFiles.length > 0) {
+          const convertedDecks: SlideDeck[] = physicalFiles.map((pf: any, idx: number) => ({
+            id: `fs-${idx}-${pf.filename}`,
+            courseId: pf.course.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+            lectureNumber: idx + 1,
+            title: pf.filename.replace(/\.pdf$/i, ""),
+            description: `Offline Folie aus Kurs ${pf.course}`,
+            topics: [pf.course, "TUWEL Slide", "Vorlesungsfolien"],
+            pageCount: 1,
+            fileSize: (pf.size_bytes / (1024 * 1024)).toFixed(1) + " MB",
+            uploadDate: new Date(pf.modified_timestamp * 1000).toISOString().slice(0, 10),
+            cached: true,
+            bookmarked: false,
+            pdfUrl: pf.path,
+            pages: [
+              {
+                pageNumber: 1,
+                title: pf.filename,
+                content: [`Datei: ${pf.filename}`, `Kurs: ${pf.course}`, `Speicherort: ${pf.path}`],
+                notes: "Aus TUWEL oder lokalem Slide Vault synchronisiert.",
+              },
+            ],
+          }));
+
+          setDecks((prev) => {
+            const existingTitles = new Set(prev.map((d) => d.title));
+            const fresh = convertedDecks.filter((d) => !existingTitles.has(d.title));
+            return [...fresh, ...prev];
+          });
+        }
+      } catch (err) {
+        console.warn("Could not query physical vault files:", err);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPhysicalSlides();
+
+    const handleMsg = (e: MessageEvent) => {
+      if (e.data?.type === "SLIDE_SAVED" || e.data?.type === "REFRESH_SLIDES") {
+        loadPhysicalSlides();
+      }
+    };
+    window.addEventListener("message", handleMsg);
+
+    let unlisten: (() => void) | undefined;
+    if ((window as any).__TAURI__?.event?.listen) {
+      (window as any).__TAURI__.event.listen("slide-saved-to-vault", () => {
+        loadPhysicalSlides();
+      }).then((fn: any) => {
+        unlisten = fn;
+      });
+    }
+
+    return () => {
+      window.removeEventListener("message", handleMsg);
+      if (unlisten) unlisten();
+    };
+  }, [loadPhysicalSlides]);
 
   const storageStats = useMemo(() => calculateStorageQuota(decks), [decks]);
 
