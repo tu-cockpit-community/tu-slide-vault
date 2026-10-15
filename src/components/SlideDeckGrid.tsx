@@ -41,12 +41,26 @@ export const SlideDeckGrid: React.FC<SlideDeckGridProps> = ({
           color: "var(--tu-text-secondary)",
         }}
       >
-        <FileText size={48} color="var(--tu-text-muted)" style={{ marginBottom: "16px" }} />
-        <div style={{ fontSize: "16px", fontWeight: 600, color: "var(--tu-text-primary)", marginBottom: "6px" }}>
-          No slide materials found
+        <div
+          style={{
+            width: "64px",
+            height: "64px",
+            borderRadius: "16px",
+            backgroundColor: "var(--tu-bg-surface)",
+            border: "1px solid var(--tu-border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: "16px",
+          }}
+        >
+          <FileText size={32} color="var(--tu-accent)" />
         </div>
-        <div style={{ fontSize: "13px", maxWidth: "400px" }}>
-          Try clearing your search query or selecting a different course from the library sidebar.
+        <div style={{ fontSize: "16px", fontWeight: 600, color: "var(--tu-text-primary)", marginBottom: "8px" }}>
+          Your Slide Vault is empty
+        </div>
+        <div style={{ fontSize: "13px", maxWidth: "420px", lineHeight: "1.5", color: "var(--tu-text-secondary)" }}>
+          In TUWEL, click <strong>"Add to Slide Vault"</strong> on any course page, or drop PDF files here to begin.
         </div>
       </div>
     );
